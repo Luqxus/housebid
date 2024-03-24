@@ -11,6 +11,7 @@ type Storage interface {
 	CreateUser(ctx context.Context, user *types.User) error
 	CountEmail(ctx context.Context, email string) (int64, error)
 	CountPhoneNumber(ctx context.Context, phonenumber string) (int64, error)
+	GetUserByEmail(ctx context.Context, email string) (*types.User, error)
 }
 
 type postgresStorage struct {
@@ -70,4 +71,19 @@ func (s *postgresStorage) CountPhoneNumber(ctx context.Context, phonenumber stri
 	}
 	err = row.Scan(&count)
 	return count, err
+}
+
+func (s *postgresStorage) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
+	query := `SELECT * FROM Users WHERE email = $1`
+
+	row := s.db.QueryRowContext(ctx, query, email)
+
+	user := new(types.User)
+
+	err := row.Scan(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
 }
