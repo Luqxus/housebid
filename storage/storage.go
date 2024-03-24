@@ -25,7 +25,26 @@ func New() *postgresStorage {
 }
 
 func (s *postgresStorage) CreateUser(ctx context.Context, user *types.User) error {
-	return nil
+	query := `INSERT INTO Users (
+		uid, first_name, last_name, username, email, phone_number, password, created_at, address
+	)
+
+	VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+
+	_, err := s.db.ExecContext(
+		ctx,
+		query,
+		user.UID,
+		user.FirstName,
+		user.LastName,
+		user.Username,
+		user.Email,
+		user.PhoneNumber,
+		user.Password, user.CreatedAt,
+		user.Address,
+	)
+
+	return err
 }
 
 func (s *postgresStorage) CountEmail(ctx context.Context, email string) (int64, error) {
