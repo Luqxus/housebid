@@ -12,7 +12,7 @@ import (
 
 type AuthService interface {
 	RegisterUser(ctx context.Context, data *types.CreateUserData) error
-	LoginUser(ctx context.Context, data *types.LoginData) *types.LoginData
+	LoginUser(ctx context.Context, data *types.LoginData) (*types.LoginData, error)
 }
 
 type authService struct {
