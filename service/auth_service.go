@@ -68,7 +68,7 @@ func (s *authService) RegisterUser(ctx context.Context, data *types.CreateUserDa
 }
 
 func hashPassword(pwd string) (string, error) {
-	b, err := bcrypt.GenerateFromPassword([]byte(pwd))
+	b, err := bcrypt.GenerateFromPassword([]byte(pwd), 14)
 
 	return string(b), err
 }
