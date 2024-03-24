@@ -3,15 +3,15 @@ package types
 import "time"
 
 type User struct {
-	UID         string    `db:"uid"`
-	Username    string    `db:"username"`
-	Email       string    `db:"email"`
-	FirstName   string    `db:"first_name"`
-	LastName    string    `db:"last_name"`
-	PhoneNumber string    `db:"phone_number"`
-	Password    string    `db:"password"`
-	Address     string    `db:"address"`
-	CreatedAt   time.Time `db:"created_at"`
+	UID         string    `json:"-" db:"uid"`
+	Username    string    `json:"username" db:"username"`
+	Email       string    `json:"email" db:"email"`
+	FirstName   string    `json:"first_name" db:"first_name"`
+	LastName    string    `json:"last_name" db:"last_name"`
+	PhoneNumber string    `json:"phone_number" db:"phone_number"`
+	Password    string    `json:"-" db:"password"`
+	Address     string    `json:"address" db:"address"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 type CreateUserData struct {
