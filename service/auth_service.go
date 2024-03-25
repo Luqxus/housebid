@@ -3,16 +3,18 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/luquxSentinel/housebid/storage"
+	"github.com/luquxSentinel/housebid/tokens"
 	"github.com/luquxSentinel/housebid/types"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
 	RegisterUser(ctx context.Context, data *types.CreateUserData) error
-	LoginUser(ctx context.Context, data *types.LoginData) (*types.LoginData, error)
+	LoginUser(ctx context.Context, data *types.LoginData) (*types.User, string, error)
 }
 
 type authService struct {
@@ -68,8 +70,37 @@ func (s *authService) RegisterUser(ctx context.Context, data *types.CreateUserDa
 	return s.storage.CreateUser(ctx, user)
 }
 
+func (s *authService) LoginUser(ctx context.Context, data *types.LoginData) (*types.User, string, error) {
+	// get user by email from storage
+	user, err := s.storage.GetUserByEmail(ctx, data.Email)
+	if err != nil {
+		log.Println(err)
+		return nil, "", errors.New("wrong email or password")
+	}
+
+	err = verifyPassword(user.Password, data.Password)
+	if err != nil {
+		log.Println(err)
+		return nil, "", errors.New("wrong email or password")
+	}
+
+	// TODO: generate jwt token
+	token, err := tokens.GenerateJWT(user.Username, user.UID)
+	if err != nil {
+		log.Println(err)
+		return nil, "", errors.New("internal error occured while signing user in. please try again")
+	}
+
+	return user, token, nil
+
+}
+
 func hashPassword(pwd string) (string, error) {
 	b, err := bcrypt.GenerateFromPassword([]byte(pwd), 14)
 
 	return string(b), err
+}
+
+func verifyPassword(hashedPassword, plainPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 }

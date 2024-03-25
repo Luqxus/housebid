@@ -31,11 +31,12 @@ func NewAPIServer(listenAddress string, authService service.AuthService) *APISer
 func (api *APIServer) Run() error {
 
 	// register user request
-	http.HandleFunc("/signup", handlerFunc(api.registerUser))
+	api.mux.HandleFunc("POST /signup", handlerFunc(api.registerUser))
 
 	// login user request
-	http.HandleFunc("/signin", handlerFunc(api.loginUser))
+	api.mux.HandleFunc("POST /signin", handlerFunc(api.loginUser))
 
+	log.Printf("server listening on port : %s.", api.listenAddress)
 	//	start server and listen for requests
 	return http.ListenAndServe(api.listenAddress, api.mux)
 }
@@ -54,7 +55,9 @@ func handlerFunc(fn APIFunc) http.HandlerFunc {
 		err := fn(writer, request.WithContext(ctx))
 
 		//		on error panic
-		log.Panic(err)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -65,7 +68,7 @@ func (api *APIServer) registerUser(writer http.ResponseWriter, request *http.Req
 	err := decodeJSON(request.Body, reqBody)
 	if err != nil {
 		http.Error(writer, "invalid request body", http.StatusBadRequest)
-		return err
+		return nil
 	}
 
 	// TODO: call registerUser service
@@ -74,7 +77,7 @@ func (api *APIServer) registerUser(writer http.ResponseWriter, request *http.Req
 	// TODO: error handling
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return err
+		return nil
 	}
 
 	// TODO: response
@@ -89,15 +92,18 @@ func (api *APIServer) loginUser(writer http.ResponseWriter, request *http.Reques
 	err := decodeJSON(request.Body, reqBody)
 	if err != nil {
 		http.Error(writer, "invalid request body", http.StatusBadRequest)
-		return err
+		return nil
 	}
 
 	// call login service func
-	user, err := api.authService.LoginUser(request.Context(), reqBody)
+	user, token, err := api.authService.LoginUser(request.Context(), reqBody)
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return err
+		return nil
 	}
+
+	// set authorization header
+	writer.Header().Set("authorization", token)
 
 	// response
 	return writeJSON(writer, http.StatusOK, map[string]any{"message": user})

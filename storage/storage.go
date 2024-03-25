@@ -2,7 +2,9 @@ package storage
 
 import (
 	"context"
-	"database/sql"
+	"log"
+
+	"github.com/jmoiron/sqlx"
 
 	"github.com/luquxSentinel/housebid/types"
 )
@@ -15,14 +17,17 @@ type Storage interface {
 }
 
 type postgresStorage struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func New() *postgresStorage {
-	db := dbconnection()
+func New() (*postgresStorage, error) {
+	db, err := dbconnection()
+	if err != nil {
+		return nil, err
+	}
 	return &postgresStorage{
 		db: db,
-	}
+	}, nil
 }
 
 func (s *postgresStorage) CreateUser(ctx context.Context, user *types.User) error {
@@ -53,35 +58,33 @@ func (s *postgresStorage) CountEmail(ctx context.Context, email string) (int64, 
 
 	query := `SELECT COUNT(email) FROM Users WHERE email = $1`
 
-	row, err := s.db.QueryContext(ctx, query, email)
-	if err != nil {
-		return -1, err
-	}
-	err = row.Scan(&count)
+	row := s.db.QueryRowContext(ctx, query, email)
+
+	err := row.Scan(&count)
 	return count, err
 }
+
 func (s *postgresStorage) CountPhoneNumber(ctx context.Context, phonenumber string) (int64, error) {
 	var count int64
 
 	query := `SELECT COUNT(phone_number) FROM Users WHERE phone_number = $1`
 
-	row, err := s.db.QueryContext(ctx, query, phonenumber)
-	if err != nil {
-		return -1, err
-	}
-	err = row.Scan(&count)
+	row := s.db.QueryRowContext(ctx, query, phonenumber)
+
+	err := row.Scan(&count)
 	return count, err
 }
 
 func (s *postgresStorage) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	query := `SELECT * FROM Users WHERE email = $1`
 
-	row := s.db.QueryRowContext(ctx, query, email)
+	row := s.db.QueryRowxContext(ctx, query, email)
 
 	user := new(types.User)
 
-	err := row.Scan(user)
+	err := row.StructScan(user)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
