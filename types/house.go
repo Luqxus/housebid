@@ -13,14 +13,14 @@ type House struct {
 }
 
 type HouseAddress struct {
-	AddressID      string `db:"address_id"`
-	HouseID        string `db:"house_id"`
-	BuildingNumber string `db:"building_no"`
-	Surbub         string `db:"surbub"`
-	City           string `db:"city"`
-	Street         string `db:"street"`
-	Province       string `db:"province"`
-	PostalCode     string `db:"postal_code"`
+	AddressID      string `json:"dddress_id" db:"address_id"`
+	HouseID        string `json:"house_id" db:"house_id"`
+	BuildingNumber string `json:"building_number" db:"building_no"`
+	Surbub         string `json:"surbub" db:"surbub"`
+	City           string `json:"city" db:"city"`
+	Street         string `json:"street" db:"street"`
+	Province       string `json:"province" db:"province"`
+	PostalCode     string `json:"postal_code" db:"postal_code"`
 }
 
 type HouseImage struct {
@@ -30,13 +30,13 @@ type HouseImage struct {
 }
 
 type HouseResponse struct {
-	HouseID      string   `json:"house_id"`
-	UID          string   `json:"uid"`
-	Address      string   `json:"address"`
-	ListingPrice float64  `json:"listing_price"`
-	Description  string   `json:"description"`
-	Images       []string `json:"images"`
-	Status       string   `json:"status"` // | AVAILABLE | PENDING | SOLD | EXPIRED
+	HouseID      string       `json:"house_id"`
+	UID          string       `json:"uid"`
+	Address      HouseAddress `json:"address"`
+	ListingPrice float64      `json:"listing_price"`
+	Description  string       `json:"description"`
+	Images       []string     `json:"images"`
+	Status       string       `json:"status"` // | AVAILABLE | PENDING | SOLD | EXPIRED
 
 }
 
@@ -44,10 +44,16 @@ type CreateHouseData struct {
 	ListingPrice   float64 `json:"listing_price"`
 	Description    string  `json:"description"`
 	Status         string  `json:"status"` // | AVAILABLE | PENDING | SOLD | EXPIRED
-	BuildingNumber string  `db:"building_no"`
-	Surbub         string  `db:"surbub"`
-	City           string  `db:"city"`
-	Street         string  `db:"street"`
-	Province       string  `db:"province"`
-	PostalCode     string  `db:"postal_code"`
+	BuildingNumber string  `json:"building_no"`
+	Surbub         string  `json:"surbub"`
+	City           string  `json:"city"`
+	Street         string  `json:"street"`
+	Province       string  `json:"province"`
+	PostalCode     string  `json:"postal_code"`
+}
+
+type HouseQueryFilter struct {
+	ListingPrice float64 `json:"listing_price"`
+	City         string  `json:"city"`
+	Surbub       string  `json:"suburb"`
 }

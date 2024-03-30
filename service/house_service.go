@@ -12,14 +12,10 @@ import (
 
 type HouseService interface {
 	// Create a house | cannot list a house with the same address twice
+	ListHouse(ctx context.Context, data *types.CreateHouseData, uid string) error
 
-	// Create HouseImages
-
-	// Create House Address | a house cannot 2 address | cannot have duplicate address
-
-	// GetHouseByLocation
-
-	// GetHouseByID
+	// GetHousesByFilter
+	GetHousesByFilter(ctx context.Context, filter *types.HouseQueryFilter) ([]*types.HouseResponse, error)
 }
 
 type houseService struct {
@@ -30,6 +26,18 @@ func NewHouseService(storage storage.Storage) *houseService {
 	return &houseService{
 		storage: storage,
 	}
+}
+
+func (s *houseService) GetHousesByFilter(ctx context.Context, filter *types.HouseQueryFilter) ([]*types.HouseResponse, error) {
+
+	// create a response house with address
+
+	houses, err := s.storage.GetHouseByFilter(ctx, filter.ListingPrice, filter.City, filter.Surbub)
+	if err != nil {
+		return nil, err
+	}
+
+	return houses, nil
 }
 
 func (s *houseService) ListHouse(ctx context.Context, data *types.CreateHouseData, uid string) error {

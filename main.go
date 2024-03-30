@@ -22,10 +22,11 @@ func main() {
 	}
 
 	// new auth service
-	auth_service := service.NewAuthService(storage)
+	authservice := service.NewAuthService(storage)
+	houseservice := service.NewHouseService(storage)
 
 	// new api server
-	api := NewAPIServer(":3000", auth_service)
+	api := NewAPIServer(":3000", authservice, houseservice)
 
 	// run api server
 	if err := api.Run(); err != nil {

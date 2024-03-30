@@ -42,7 +42,7 @@ func ValidateJWT(signedToken string) (uid string, err error) {
 	}
 	var claims Claims
 	token, err := jwt.ParseWithClaims(signedToken, &claims, func(t *jwt.Token) (interface{}, error) {
-		return []byte(key), err
+		return []byte(key), nil
 	})
 
 	if !token.Valid {

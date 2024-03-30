@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/luquxSentinel/housebid/storage"
 	"github.com/luquxSentinel/housebid/tokens"
 	"github.com/luquxSentinel/housebid/types"
@@ -50,7 +51,7 @@ func (s *authService) RegisterUser(ctx context.Context, data *types.CreateUserDa
 
 	//TODO: create new user from data
 	user := new(types.User)
-
+	user.UID = uuid.NewString()
 	user.FirstName = data.FirstName
 	user.LastName = data.LastName
 	user.Email = data.Email

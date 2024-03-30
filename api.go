@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/luquxSentinel/housebid/middleware"
 	"github.com/luquxSentinel/housebid/service"
 	"github.com/luquxSentinel/housebid/types"
 )
@@ -18,13 +19,15 @@ type APIServer struct {
 	mux           *http.ServeMux
 	listenAddress string
 	authService   service.AuthService
+	houseService  service.HouseService
 }
 
-func NewAPIServer(listenAddress string, authService service.AuthService) *APIServer {
+func NewAPIServer(listenAddress string, authService service.AuthService, houseService service.HouseService) *APIServer {
 	return &APIServer{
 		mux:           http.NewServeMux(),
 		listenAddress: listenAddress,
 		authService:   authService,
+		houseService:  houseService,
 	}
 }
 
@@ -35,6 +38,12 @@ func (api *APIServer) Run() error {
 
 	// login user request
 	api.mux.HandleFunc("POST /signin", handlerFunc(api.loginUser))
+
+	// list house request
+	api.mux.HandleFunc("POST /list-house", middleware.AuthorizationMiddleware(handlerFunc(api.listHouse)))
+
+	// get filtered houses request
+	api.mux.HandleFunc("GET /houses/filter", middleware.AuthorizationMiddleware(handlerFunc(api.getHousesByFilter)))
 
 	log.Printf("server listening on port : %s.", api.listenAddress)
 	//	start server and listen for requests
@@ -67,6 +76,7 @@ func (api *APIServer) registerUser(writer http.ResponseWriter, request *http.Req
 	reqBody := new(types.CreateUserData)
 	err := decodeJSON(request.Body, reqBody)
 	if err != nil {
+		log.Println(err)
 		http.Error(writer, "invalid request body", http.StatusBadRequest)
 		return nil
 	}
@@ -109,7 +119,53 @@ func (api *APIServer) loginUser(writer http.ResponseWriter, request *http.Reques
 	return writeJSON(writer, http.StatusOK, map[string]any{"message": user})
 }
 
-//TODO: list a house
+// TODO: list a house
+func (api *APIServer) listHouse(writer http.ResponseWriter, request *http.Request) error {
+	// get uid from request context
+	uid := request.Context().Value("uid").(string)
+	if uid == "" {
+		http.Error(writer, "user unauthorized user", http.StatusBadRequest)
+		return nil
+	}
+
+	// get & decode request body
+	reqBody := new(types.CreateHouseData)
+	err := decodeJSON(request.Body, reqBody)
+	if err != nil {
+		http.Error(writer, "invalid request body", http.StatusBadRequest)
+		return nil
+	}
+
+	// call create house service func
+	err = api.houseService.ListHouse(request.Context(), reqBody, uid)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+
+	// write response
+	return writeJSON(writer, http.StatusOK, map[string]string{"message": "house listed successfully"})
+}
+
+func (api *APIServer) getHousesByFilter(writer http.ResponseWriter, request *http.Request) error {
+	// get request data | filter
+	filter := new(types.HouseQueryFilter)
+	err := decodeJSON(request.Body, filter)
+	if err != nil {
+		http.Error(writer, "invalid filter body", http.StatusBadRequest)
+		return nil
+	}
+
+	houses, err := api.houseService.GetHousesByFilter(request.Context(), filter)
+	if err != nil {
+		log.Printf("error occured while fectching houses with filter : %+v", filter)
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+
+	err = writeJSON(writer, http.StatusOK, houses)
+	return err
+}
 
 //TODO: bid on a house
 

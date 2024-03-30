@@ -17,7 +17,7 @@ type Storage interface {
 	GetUserByEmail(ctx context.Context, email string) (*types.User, error)
 	CountAddress(ctx context.Context, city, province, building_number string) (int64, error)
 	CreateNewHouse(ctx context.Context, house *types.House, address *types.HouseAddress) error
-	GetHouseByFilter(ctx context.Context, listingPrice float64, city string, surbub string) ([]*types.House, error)
+	GetHouseByFilter(ctx context.Context, listingPrice float64, city string, surbub string) ([]*types.HouseResponse, error)
 }
 
 type postgresStorage struct {
@@ -159,8 +159,8 @@ func (s *postgresStorage) CreateNewHouse(ctx context.Context, house *types.House
 	return nil
 }
 
-func (s *postgresStorage) GetHouseByFilter(ctx context.Context, listingPrice float64, city string, surbub string) ([]*types.House, error) {
-	query := "SELECT * FROM Houses"
+func (s *postgresStorage) GetHouseByFilter(ctx context.Context, listingPrice float64, city string, surbub string) ([]*types.HouseResponse, error) {
+	query := "SELECT * FROM Houses  INNER JOIN HouseAddresses ON Houses.house_id = HouseAddresses.house_id "
 
 	if city != "" {
 		query = fmt.Sprintf("%s WHERE city = %s", query, city)
@@ -191,10 +191,10 @@ func (s *postgresStorage) GetHouseByFilter(ctx context.Context, listingPrice flo
 		return nil, err
 	}
 
-	houses := make([]*types.House, 0)
+	houses := make([]*types.HouseResponse, 0)
 
 	for rows.Next() {
-		house := types.House{}
+		house := types.HouseResponse{}
 		err = rows.StructScan(house)
 		if err != nil {
 			return nil, err
